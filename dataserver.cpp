@@ -26,6 +26,8 @@ void DataServer::operator()(){
             read();
         else if(cmd == "locate")
             locate();
+        else if(cmd == "fetch")
+            fetch();
         this->finish = true;
         lk.unlock();
         cv.notify_all();
@@ -64,6 +66,21 @@ void DataServer::read(){
         }
         is.read(&buf[start], std::min(chunkSize, bufSize - start));
         start += chunkSize;
+    }
+}
+
+void DataServer::fetch(){
+    buf = new char[chunkSize];
+    std::string filePath = name_ + "/" + std::to_string(fid) + " " + std::to_string(offset);
+    std::ifstream is(filePath);
+    // file found not in this server.
+    if(!is){
+        delete []buf;
+        bufSize = 0;
+    }
+    else{
+        is.read(buf, std::min(chunkSize, bufSize - chunkSize * offset));
+        bufSize = is.tellg();
     }
 }
 

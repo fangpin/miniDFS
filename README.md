@@ -47,7 +47,8 @@ make
 ./miniDFS
 put source_file_path dest_file_path
 ls
-locate 1 1
+locate FileID Offset
+fetch FileID Offset dest_file_path
 ...
 read source_file_path dest_file_path
 ...

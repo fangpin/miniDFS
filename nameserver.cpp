@@ -33,7 +33,10 @@ void NameServer::operator()(){
         char *buf = nullptr;
         // md5 checksum for replicate chunks;
         MD5 md5;
-        if(parameters.empty()) continue;
+        if(parameters.empty()){
+            std::cerr << "input a blank line" << std::endl;
+            continue;
+        }
         if(parameters[0] == "quit"){
             exit(0);
         }
@@ -43,6 +46,7 @@ void NameServer::operator()(){
                 std::cerr << "useage: " << "list (list all the files in name server)" << std::endl;
             }
             else{
+                std::cout << "file\tFileID\tChunkNumber" << std::endl;
                 fileTree_.list(meta);
             }
             continue;
@@ -87,22 +91,29 @@ void NameServer::operator()(){
             }
         }
         // fetch file from miniDFS
-        else if (parameters[0] == "read"){
-            if(parameters.size() != 3){
-                std::cerr << "useage: " << "read source_file_path des_file_path" << std::endl;
+        else if (parameters[0] == "read" || parameters[0] == "fetch"){
+            if(parameters.size() != 3 && parameters.size()!=4){
+                std::cerr << "useage: " << "read source_file_path dest_file_path" << std::endl;
+                std::cerr << "useage: " << "fetch FileID Offset dest_file_path" << std::endl;
                 continue;
             }
             else{
-                if(meta.find(parameters[1]) == meta.end()){
+                if(parameters[0] == "read" && meta.find(parameters[1]) == meta.end()){
                     std::cerr << "error: no such file in miniDFS." << std::endl;
                     continue;
                 }
-                std::pair<int, int> metaData = meta[parameters[1]];
                 for(int i=0; i<4; ++i){
                     std::unique_lock<std::mutex> lk(dataServers_[i]->mtx);
-                    dataServers_[i]->cmd = "read";
-                    dataServers_[i]->fid = metaData.first;
-                    dataServers_[i]->bufSize = metaData.second;
+                    dataServers_[i]->cmd = parameters[0];
+                    if(parameters[0] == "read"){
+                        std::pair<int, int> metaData = meta[parameters[1]];
+                        dataServers_[i]->fid = metaData.first;
+                        dataServers_[i]->bufSize = metaData.second;
+                    }
+                    else{
+                        dataServers_[i]->fid = std::stoi(parameters[1]);
+                        dataServers_[i]->offset = std::stoi(parameters[2]);
+                    }
                     dataServers_[i]->finish = false;
                     lk.unlock();
                     dataServers_[i]->cv.notify_all();
@@ -139,11 +150,15 @@ void NameServer::operator()(){
         }
 
         // work after processing of data server
-        if(parameters[0] == "read"){
+        if(parameters[0] == "read" || parameters[0] == "fetch"){
             std::string md5_checksum, pre_checksum;
             for (int i=0; i<4; ++i){
                 if(dataServers_[i]->bufSize){
-                    std::ofstream os(parameters[2]);
+                    std::ofstream os;
+                    if(parameters[0] == "read")
+                        os.open(parameters[2]);
+                    else if (parameters[0] == "fetch")
+                        os.open(parameters[3]);
                     if(!os)
                         std::cerr << "create file failed. maybe wrong directory." << std::endl;
                     else{
