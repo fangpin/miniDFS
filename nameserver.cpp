@@ -63,7 +63,7 @@ void NameServer::operator()(){
                 continue;
             }
             else if (!fileTree_.insert_node(parameters[2], true)){
-                std::cerr << "create file error \n.maybe the file : " << parameters[2] << "exists" << std::endl;
+                std::cerr << "create file error \n.maybe the file : " << parameters[2] << " exists" << std::endl;
                 continue;
             }
             else{
