@@ -14,18 +14,56 @@ bool FileTree::insert_node(const std::string &path, const bool isFile){
     if(isFound) return false;
 
     std::vector<std::string> path_folders = split(path, '/');
-    TreeNode *newNode = new TreeNode(path, isFile);
-    newNode->parent = parent;
-    TreeNode* son = parent->firstSon;
-    if(!son)
-        parent->firstSon = newNode;
-    else{
-        while(son->nextSibling)
-            son = son->nextSibling;
-        son->nextSibling = newNode;
+    TreeNode* match = _root;
+    TreeNode* cur = _root->firstSon;
+    for (size_t i = 0; i < path_folders.size(); ++i) {
+      // Try to get the node
+      while (cur && cur->value_ != path_folders[i]) {
+        cur = cur->nextSibling;
+      }
+
+      // Found the node, try next layer
+      if (cur) {
+        match = cur;
+        cur = cur->firstSon;
+        continue;
+      }
+
+      // If the last layer, add node directly
+      if (i + 1 == path_folders.size()) {
+        // create this node of file
+        auto node = new TreeNode(path_folders[i], true);
+        node->parent = match;
+        if (!match->firstSon) {
+          match->firstSon = node;
+        } else {
+          auto sibling = match->firstSon;
+          while (sibling->nextSibling) {
+            sibling = sibling->nextSibling;
+          }
+          sibling->nextSibling = node;
+        }
+
+        return true;
+      }
+
+      // If not the last layer, add missing dir node
+      auto dir = new TreeNode(path_folders[i], false);
+      dir->parent = match;
+      if (!match->firstSon) {
+        match->firstSon = dir;
+      } else {
+        auto sibling = match->firstSon;
+        while (sibling->nextSibling) {
+          sibling = sibling->nextSibling;
+        }
+        sibling->nextSibling = dir;
+      }
+
+      match = dir;
+      cur = match->firstSon;
     }
-    while(son) son = son->nextSibling;
-    son = newNode;
+
     return true;
 }
 
