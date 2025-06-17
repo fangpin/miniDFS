@@ -41,7 +41,7 @@ bool FileTree::find_node(const std::string &path, TreeNode **last_node)const{
         *last_node = node;
         node = node->firstSon;
     }
-    return true && node->isFile;
+    return (*last_node)->isFile;
 }
 
 void FileTree::list(TreeNode *node, std::map<std::string, std::pair<int, int>>& meta){
