@@ -85,7 +85,10 @@ bool FileTree::find_node(const std::string &path, TreeNode **last_node)const{
 void FileTree::list(TreeNode *node, std::map<std::string, std::pair<int, int>>& meta){
     static int chunkSize = 2 * 1024 * 1024;
     if(node){
-        std::cout << node->value_ << "\t" << meta[node->value_].first << "\t" << (int)ceil(1.0 * meta[node->value_].second/chunkSize) << std::endl;
+        if (node->isFile) {
+          auto full_path_of_file = list_node_path(node);
+          std::cout << full_path_of_file << "\t" << meta[full_path_of_file].first << "\t" << (int)ceil(1.0 * meta[full_path_of_file].second/chunkSize) << std::endl;
+        }
         // std::cout << node->value_ << "\t" << std::endl;
         list(node->firstSon, meta);
         list(node->nextSibling, meta);
@@ -94,4 +97,13 @@ void FileTree::list(TreeNode *node, std::map<std::string, std::pair<int, int>>& 
 
 void FileTree::list(std::map<std::string, std::pair<int, int>>& meta){
     list(_root, meta);
+}
+
+const std::string FileTree::list_node_path(TreeNode* node) {
+  while (node->parent) {
+    return list_node_path(node->parent) + "/" + node->value_;
+  }
+
+  // Don't return the root value, which is '/'
+  return (node->value_ != "/") ? node->value_ : "";
 }

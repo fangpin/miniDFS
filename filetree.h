@@ -23,6 +23,7 @@ public:
     bool find_node(const std::string &path, TreeNode **parent)const;
     void list(TreeNode *node, std::map<std::string, std::pair<int, int>>& meta);
     void list(std::map<std::string, std::pair<int, int>>& meta);
+    const std::string list_node_path(TreeNode* node);
 };
 
 #endif
